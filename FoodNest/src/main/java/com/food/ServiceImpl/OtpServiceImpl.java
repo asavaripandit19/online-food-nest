@@ -107,6 +107,8 @@ public class OtpServiceImpl implements OtpService {
             String email,
             OtpPurpose purpose
     ) {
+    	
+    	validateEmail(email);
 
         if (email == null || email.isBlank()) {
             throw new RuntimeException("Email required");
@@ -160,4 +162,24 @@ public class OtpServiceImpl implements OtpService {
             );
         }
     }
+    
+	@Override
+	public  void validateEmail(String email) {
+
+	    if (email == null || email.isBlank()) {
+
+	        throw new RuntimeException(
+	                "Email is required"
+	        );
+	    }
+
+	    if (!email.matches(
+	            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+	    )) {
+
+	        throw new RuntimeException(
+	                "Invalid email format"
+	        );
+	    }
+	}
 }

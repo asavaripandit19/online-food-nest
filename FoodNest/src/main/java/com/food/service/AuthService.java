@@ -14,4 +14,5 @@ public interface AuthService {
 	 public String verifyForgotPasswordOtp(String email,String otp);
 	 public String resetPassword(String email,String otp,String newPassword);
 	 public void validateMobile(String mobile);
+	 public void validateEmail(String email);
 }

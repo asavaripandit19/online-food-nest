@@ -34,6 +34,7 @@ public class AuthServiceImpl implements AuthService {
 	public String verifySignupOtp(String mobile, String otp) {
 		
 		validateMobile(mobile);
+		
 
 		
 		OtpVerification verification = otpRepository.findTopByMobileOrderByIdDesc(mobile)
@@ -149,6 +150,7 @@ public class AuthServiceImpl implements AuthService {
 		@Override
 		public String verifyEmailSignupOtp(String email, String otp) {
 
+			validateEmail(email);
 		    OtpVerification verification =
 		            otpRepository.findTopByEmailOrderByIdDesc(email)
 		            .orElseThrow(() -> new RuntimeException("OTP not found"));
@@ -165,7 +167,7 @@ public class AuthServiceImpl implements AuthService {
 		
 		@Override
 		public String forgotPasswordSendOtp(String email) {
-
+			validateEmail(email);
 		    // check user exists
 		    User user = userRepository.findByEmail(email)
 		            .orElseThrow(() ->
@@ -214,6 +216,7 @@ public class AuthServiceImpl implements AuthService {
 		        String otp
 		) {
 
+			validateEmail(email);
 		    OtpVerification verification =
 		            otpRepository
 		            .findTopByEmailOrderByIdDesc(email)
@@ -252,7 +255,7 @@ public class AuthServiceImpl implements AuthService {
 		        String otp,
 		        String newPassword
 		) {
-
+			validateEmail(email);
 		    OtpVerification verification =
 		            otpRepository
 		            .findTopByEmailOrderByIdDesc(email)
@@ -294,6 +297,26 @@ public class AuthServiceImpl implements AuthService {
 
 		        throw new RuntimeException(
 		                "Mobile number must start with +91 and contain 10 digits"
+		        );
+		    }
+		}
+		
+		@Override
+		public  void validateEmail(String email) {
+
+		    if (email == null || email.isBlank()) {
+
+		        throw new RuntimeException(
+		                "Email is required"
+		        );
+		    }
+
+		    if (!email.matches(
+		            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+		    )) {
+
+		        throw new RuntimeException(
+		                "Invalid email format"
 		        );
 		    }
 		}
