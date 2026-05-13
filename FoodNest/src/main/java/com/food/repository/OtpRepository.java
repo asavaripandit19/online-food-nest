@@ -15,5 +15,7 @@ public interface OtpRepository extends JpaRepository<OtpVerification, Long>{
     Optional<OtpVerification> findTopByEmailOrderByIdDesc(String email);
 
 	Optional<OtpVerification> findTopByMobileAndPurposeOrderByIdDesc(String mobile, OtpPurpose purpose);
+	
+	Optional<OtpVerification>findTopByEmailAndPurposeOrderByIdDesc(String email, OtpPurpose purpose);
 
 }

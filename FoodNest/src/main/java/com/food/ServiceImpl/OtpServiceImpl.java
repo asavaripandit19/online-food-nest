@@ -102,20 +102,15 @@ public class OtpServiceImpl implements OtpService {
         return otp;
     }
 
+   
     @Override
     public String sendEmailOtp(
             String email,
             OtpPurpose purpose
     ) {
-    	
-    	validateEmail(email);
-
-        if (email == null || email.isBlank()) {
-            throw new RuntimeException("Email required");
-        }
 
         String otp = String.valueOf(
-                1000 + secureRandom.nextInt(9000)
+                1000 + new SecureRandom().nextInt(9000)
         );
 
         OtpVerification verification =
@@ -127,9 +122,9 @@ public class OtpServiceImpl implements OtpService {
 
         verification.setPurpose(purpose);
 
-        verification.setAttempts(0);
-
         verification.setVerified(false);
+
+        verification.setAttempts(0);
 
         verification.setCreatedAt(
                 LocalDateTime.now()
@@ -145,6 +140,8 @@ public class OtpServiceImpl implements OtpService {
 
         return "OTP sent successfully";
     }
+    
+    
     
     private void validateMobile(String mobile) {
 

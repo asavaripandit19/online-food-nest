@@ -59,7 +59,7 @@ public class AuthController {
     // LOGIN (EMAIL)
     // =========================
 
-    @PostMapping("/login")
+    @PostMapping("/login/email/password")
     public String login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
@@ -68,12 +68,12 @@ public class AuthController {
     // LOGIN (MOBILE OTP)
     // =========================
 
-    @PostMapping("/login/send-otp")
+    @PostMapping("/login/mobile/send-otp")
     public String sendLoginOtp(@RequestBody SendOtpRequest request) {
         return otpService.generateAndSaveOtp(request.getMobile(), OtpPurpose.LOGIN);
     }
 
-    @PostMapping("/login/verify-otp")
+    @PostMapping("/login/mobile/verify-otp")
     public String verifyLoginOtp(@RequestBody VerifyOtpRequest request) {
         return authService.loginVerifyOtp(request.getMobile(), request.getOtp());
     }
@@ -107,5 +107,25 @@ public class AuthController {
                         otp,
                         newPassword
                 );
+    }
+    
+    @PostMapping("/login/email/send-otp")
+    public String sendEmailLoginOtp(
+            @RequestBody SendOtpRequest request
+    ) {
+        return otpService.sendEmailOtp(
+                request.getEmail(),
+                OtpPurpose.LOGIN
+        );
+    }
+
+    @PostMapping("/login/email/verify-otp")
+    public String verifyEmailLoginOtp(
+            @RequestBody VerifyOtpRequest request
+    ) {
+        return authService.verifyEmailLoginOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
     }
 }
