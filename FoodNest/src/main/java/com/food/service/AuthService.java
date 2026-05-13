@@ -2,12 +2,13 @@ package com.food.service;
 
 import com.food.dto.LoginRequest;
 import com.food.dto.SignupRequest;
+import com.food.enums.Role;
 
 public interface AuthService {
 
 	public String verifySignupOtp(String mobile, String otp);
 
-	public String signup(SignupRequest request);
+
 
 	public String login(LoginRequest request);
 
@@ -25,5 +26,7 @@ public interface AuthService {
 
 	public void validateEmail(String email);
 
-	String verifyEmailLoginOtp(String email, String otp);
+	public String verifyEmailLoginOtp(String email, String otp);
+
+	public String signup(SignupRequest request, Role role);
 }

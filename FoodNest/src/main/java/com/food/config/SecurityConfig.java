@@ -1,16 +1,15 @@
 package com.food.config;
 
 import com.food.filter.JwtAuthenticationFilter;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.food.filter.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.authentication.AuthenticationManager;
-
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 import org.springframework.security.config.http.SessionCreationPolicy;
 
@@ -18,110 +17,68 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    // =========================
-    // JWT FILTER
-    // =========================
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    // =========================
-    // PASSWORD ENCODER
-    // =========================
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            RateLimitFilter rateLimitFilter
+    ) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
-    // =========================
-    // AUTHENTICATION MANAGER
-    // =========================
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+           
+            .csrf(csrf -> csrf.disable())
+
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+           
+            .authorizeHttpRequests(auth -> auth
+
+                // PUBLIC AUTH APIS
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // ROLE BASED ACCESS
+                .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/auth/vendor/**").hasRole("VENDOR")
+
+                // EVERYTHING ELSE SECURED
+                .anyRequest().authenticated()
+            )
+
+            
+            // 1. Rate limit first
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+
+            // 2. JWT authentication second
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config
     ) throws Exception {
-
         return config.getAuthenticationManager();
-    }
-
-    // =========================
-    // SECURITY FILTER CHAIN
-    // =========================
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
-
-        http
-
-                // =========================
-                // DISABLE CSRF
-                // =========================
-
-                .csrf(csrf -> csrf.disable())
-
-                // =========================
-                // STATELESS SESSION
-                // =========================
-
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
-
-                // =========================
-                // AUTHORIZATION RULES
-                // =========================
-
-                .authorizeHttpRequests(auth -> auth
-
-                        // PUBLIC APIs
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-
-                        // ADMIN APIs
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
-
-                        // VENDOR APIs
-                        .requestMatchers("/vendor/**")
-                        .hasAnyRole(
-                                "VENDOR",
-                                "ADMIN"
-                        )
-
-                        // CUSTOMER APIs
-                        .requestMatchers("/customer/**")
-                        .hasRole("CUSTOMER")
-
-                        // OTHER APIs
-                        .anyRequest()
-                        .authenticated()
-                )
-
-                // =========================
-                // JWT FILTER
-                // =========================
-
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        return http.build();
     }
 }

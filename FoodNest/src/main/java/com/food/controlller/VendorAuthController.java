@@ -5,12 +5,13 @@ import org.springframework.web.bind.annotation.*;
 
 import com.food.dto.*;
 import com.food.enums.OtpPurpose;
+import com.food.enums.Role;
 import com.food.service.AuthService;
 import com.food.service.OtpService;
 
 @RestController
-@RequestMapping("/api/auth")
-public class AuthController {
+@RequestMapping("/api/auth/vendor")
+public class VendorAuthController {
 
     @Autowired
     private AuthService authService;
@@ -52,7 +53,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     public String signup(@RequestBody SignupRequest request) {
-        return authService.signup(request);
+    	return authService.signup(request, Role.VENDOR);
     }
 
     // =========================
@@ -78,36 +79,36 @@ public class AuthController {
         return authService.loginVerifyOtp(request.getMobile(), request.getOtp());
     }
     
-    @PostMapping("/forgot-password/send-otp")
-    public String forgotPasswordOtp(
-            @RequestParam String email
-    ) {
-        return authService
-                .forgotPasswordSendOtp(email);
-    }
-    
-    @PostMapping("/forgot-password/verify-otp")
-    public String verifyForgotOtp(
-            @RequestParam String email,
-            @RequestParam String otp
-    ) {
-        return authService
-                .verifyForgotPasswordOtp(email, otp);
-    }
-    
-    @PostMapping("/forgot-password/reset")
-    public String resetPassword(
-            @RequestParam String email,
-            @RequestParam String otp,
-            @RequestParam String newPassword
-    ) {
-        return authService
-                .resetPassword(
-                        email,
-                        otp,
-                        newPassword
-                );
-    }
+//    @PostMapping("/forgot-password/send-otp")
+//    public String forgotPasswordOtp(
+//            @RequestParam String email
+//    ) {
+//        return authService
+//                .forgotPasswordSendOtp(email);
+//    }
+//    
+//    @PostMapping("/forgot-password/verify-otp")
+//    public String verifyForgotOtp(
+//            @RequestParam String email,
+//            @RequestParam String otp
+//    ) {
+//        return authService
+//                .verifyForgotPasswordOtp(email, otp);
+//    }
+//    
+//    @PostMapping("/forgot-password/reset")
+//    public String resetPassword(
+//            @RequestParam String email,
+//            @RequestParam String otp,
+//            @RequestParam String newPassword
+//    ) {
+//        return authService
+//                .resetPassword(
+//                        email,
+//                        otp,
+//                        newPassword
+//                );
+//    }
     
     @PostMapping("/login/email/send-otp")
     public String sendEmailLoginOtp(

@@ -11,6 +11,8 @@ import com.food.dto.LoginRequest;
 import com.food.dto.SignupRequest;
 import com.food.enums.OtpPurpose;
 import com.food.enums.Role;
+import com.food.exception.EmailAlreadyExistsException;
+import com.food.exception.MobileAlreadyExistsException;
 import com.food.model.OtpVerification;
 import com.food.model.User;
 import com.food.repository.OtpRepository;
@@ -150,85 +152,73 @@ public class AuthServiceImpl implements AuthService {
     // =========================
 
     @Override
-    public String signup(SignupRequest request) {
+    public String signup(SignupRequest request, Role role) {
 
-        validateMobile(request.getMobile());
+        boolean hasEmail = request.getEmail() != null && !request.getEmail().isBlank();
+        boolean hasMobile = request.getMobile() != null && !request.getMobile().isBlank();
 
-        validateEmail(request.getEmail());
-
-        // email exists
-        if (userRepository.existsByEmail(
-                request.getEmail())) {
-
-            return "Email already registered";
+        if (hasEmail && hasMobile) {
+            throw new RuntimeException("Use either Email OR Mobile");
         }
 
-        // mobile exists
-        if (userRepository.existsByMobile(
-                request.getMobile())) {
-
-            return "Mobile already registered";
-        }
-
-        // mobile otp check
-        OtpVerification mobileOtp =
-                otpRepository
-                .findTopByMobileAndPurposeOrderByIdDesc(
-                        request.getMobile(),
-                        OtpPurpose.SIGNUP
-                )
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Mobile OTP not verified"
-                        )
-                );
-
-        if (!mobileOtp.isVerified()) {
-
-            return "Mobile OTP not verified";
-        }
-
-        // email otp check
-        OtpVerification emailOtp =
-                otpRepository
-                .findTopByEmailAndPurposeOrderByIdDesc(
-                        request.getEmail(),
-                        OtpPurpose.SIGNUP
-                )
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Email OTP not verified"
-                        )
-                );
-
-        if (!emailOtp.isVerified()) {
-
-            return "Email OTP not verified";
+        if (!hasEmail && !hasMobile) {
+            throw new RuntimeException("Email or Mobile required");
         }
 
         User user = new User();
 
-        user.setEmail(request.getEmail());
+        // EMAIL
+        if (hasEmail) {
 
-        user.setMobile(request.getMobile());
+            validateEmail(request.getEmail());
 
-        user.setPassword(
-                passwordEncoder.encode(
-                        request.getPassword()
-                )
-        );
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new EmailAlreadyExistsException("Email already registered");
+            }
 
-        user.setRole(Role.VENDOR);
+            OtpVerification otp = otpRepository
+                    .findTopByEmailAndPurposeOrderByIdDesc(request.getEmail(), OtpPurpose.SIGNUP)
+                    .orElseThrow(() -> new RuntimeException("Email OTP not found"));
 
-        user.setVerified(true);
+            if (!otp.isVerified()) {
+                throw new RuntimeException("Email OTP not verified");
+            }
+
+            user.setEmail(request.getEmail());
+        }
+
+        // MOBILE
+        if (hasMobile) {
+
+            validateMobile(request.getMobile());
+
+            if (userRepository.existsByMobile(request.getMobile())) {
+                throw new MobileAlreadyExistsException("Mobile already registered");
+            }
+
+            OtpVerification otp = otpRepository
+                    .findTopByMobileAndPurposeOrderByIdDesc(request.getMobile(), OtpPurpose.SIGNUP)
+                    .orElseThrow(() -> new RuntimeException("Mobile OTP not found"));
+
+            if (!otp.isVerified()) {
+                throw new RuntimeException("Mobile OTP not verified");
+            }
+
+            user.setMobile(request.getMobile());
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        // 🔥 ROLE COMES FROM CONTROLLER
+        user.setRole(role);
 
         user.setActive(true);
-
+        user.setVerified(true);
         user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
 
-        return "Signup successful";
+        return role + " signup successful";
     }
 
     // =========================
@@ -629,5 +619,7 @@ public class AuthServiceImpl implements AuthService {
 		            user.getRole().name()
 		    );
 		}
+
+	
 		
 	}
