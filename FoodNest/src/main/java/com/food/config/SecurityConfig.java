@@ -50,6 +50,9 @@ public class SecurityConfig {
 
                 // PUBLIC AUTH APIS
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/restaurant/create").hasRole("VENDOR")
+                .requestMatchers("/restaurant/logo/**").hasRole("VENDOR")
+                .requestMatchers("/restaurant/cover/**").hasRole("VENDOR")
 
                 // ROLE BASED ACCESS
                 .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
@@ -60,7 +63,7 @@ public class SecurityConfig {
             )
 
             
-            // 1. Rate limit first
+            // 1.Rate limit first
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
 
             // 2. JWT authentication second

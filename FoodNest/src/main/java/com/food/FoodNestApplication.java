@@ -10,5 +10,7 @@ public class FoodNestApplication {
 		SpringApplication.run(FoodNestApplication.class, args);
 		System.out.println("Ok");
 	}
+	
+	
 
 }

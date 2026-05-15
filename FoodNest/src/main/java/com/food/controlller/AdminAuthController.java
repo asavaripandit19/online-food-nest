@@ -19,9 +19,9 @@ public class AdminAuthController {
     @Autowired
     private OtpService otpService;
 
-    // =========================
+    // ========================
     // MOBILE SIGNUP OTP
-    // =========================
+    // ========================
 
     @PostMapping("/signup/mobile/send-otp")
     public String sendMobileOtp(@RequestBody SendOtpRequest request) {
