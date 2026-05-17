@@ -20,28 +20,74 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name ="users_info")
+@Table(name ="users")
 
 public class User {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+	
+	// ==========================================
+	// USERNAME
+	// ==========================================
+	
+	@Column(unique = true)
+	private String username;
+	
+	
+	// ==========================================
+	// MOBILE
+	// ==========================================
+	
+	@Column(unique = true)
 	private String mobile;
 	
+	
+	// ==========================================
+	// VERIFIED
+	// ==========================================
 	
 	@Column(columnDefinition = "TINYINT(1)")
 	private boolean verified;
 	
+	
+	// ==========================================
+	// ACTIVE
+	// ==========================================
+	
 	@Column(columnDefinition = "TINYINT(1)")
 	private boolean active;
 	
+	
+	// ==========================================
+	// EMAIL
+	// ==========================================
+	
+	@Column(unique = true)
 	private String email;
+	
+	
+	// ==========================================
+	// PASSWORD
+	// ==========================================
+	
 	private String password;
+	
+	
+	// ==========================================
+	// ROLE
+	// ==========================================
 	
 	@Enumerated(EnumType.STRING)
 	private Role role;
 	
-	private LocalDateTime createdAt;
 	
+	// ==========================================
+	// CREATED DATE
+	// ==========================================
+	
+	private LocalDateTime createdAt;
+
 }

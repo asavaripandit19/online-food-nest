@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -116,6 +118,26 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse(
                         false,
                         ex.getMessage(),
+                        null
+                ));
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidationException(
+            MethodArgumentNotValidException ex) {
+
+        String errorMessage = "Validation failed";
+
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errorMessage = error.getDefaultMessage();
+            break;
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiResponse(
+                        false,
+                        errorMessage,
                         null
                 ));
     }

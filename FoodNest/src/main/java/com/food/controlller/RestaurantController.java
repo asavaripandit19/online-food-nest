@@ -23,7 +23,6 @@ public class RestaurantController {
 
 	@Autowired
 	private RestaurantService restaurantService;
-	
 
 	@PostMapping("/create")
 	public ApiResponse createRestaurant(@RequestBody RestaurantRequest request) {
@@ -31,20 +30,15 @@ public class RestaurantController {
 	}
 
 	@PostMapping(value = "/logo/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ApiResponse uploadLogo(
-	        @PathVariable Long id,
-	        @RequestPart("logo") MultipartFile logo
-	) throws IOException {
+	public ApiResponse uploadLogo(@PathVariable Long id, @RequestPart("logo") MultipartFile logo) throws IOException {
 
-	    return restaurantService.uploadLogo(id, logo);
+		return restaurantService.uploadLogo(id, logo);
 	}
 
 	@PostMapping(value = "/cover/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ApiResponse uploadCover(
-	        @PathVariable Long id,
-	        @RequestPart("cover") MultipartFile coverImage
-	) throws IOException {
+	public ApiResponse uploadCover(@PathVariable Long id, @RequestPart("cover") MultipartFile coverImage)
+			throws IOException {
 
-	    return restaurantService.uploadCover(id, coverImage);
+		return restaurantService.uploadCover(id, coverImage);
 	}
 }

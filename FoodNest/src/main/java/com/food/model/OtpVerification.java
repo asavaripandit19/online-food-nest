@@ -17,7 +17,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "Otp_table")
+@Table(name = "Otp_verification")
 public class OtpVerification {
 
 	 @Id
@@ -30,7 +30,7 @@ public class OtpVerification {
 	    @Column(length = 100)
 	    private String email;
 
-	    @Column(nullable = false, length = 6)
+	    @Column(nullable = false, length = 100)
 	    private String otp;
 
 	    @Enumerated(EnumType.STRING)

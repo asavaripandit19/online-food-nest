@@ -1,32 +1,32 @@
 package com.food.service;
 
 import com.food.dto.LoginRequest;
-import com.food.dto.SignupRequest;
+import com.food.dto.UsernamePasswordRequest;
 import com.food.enums.Role;
 
 public interface AuthService {
 
-	public String verifySignupOtp(String mobile, String otp);
+	String verifyMobileOtp(String mobile, String otp);
 
+	String signupMobileSendOtp(String mobile, Role role);
 
+	String signupEmailSendOtp(String email, Role role);
 
-	public String login(LoginRequest request);
+	String verifyEmailOtp(String email, String otp);
 
-	public String loginVerifyOtp(String mobile, String otp);
+	String login(LoginRequest request);
 
-	public String verifyEmailSignupOtp(String email, String otp);
+	String loginVerifyMobileOtp(String mobile, String otp);
 
-	public String forgotPasswordSendOtp(String email);
+	String verifyEmailLoginOtp(String email, String otp);
 
-	public String verifyForgotPasswordOtp(String email, String otp);
+	String sendLoginMobileOtp(String mobile, Role role);
 
-	public String resetPassword(String email, String otp, String newPassword);
+	String sendLoginEmailOtp(String email, Role role);
 
-	public void validateMobile(String mobile);
+	public String signupWithUsernamePassword(UsernamePasswordRequest request, Role role);
 
-	public void validateEmail(String email);
+	void validateMobile(String mobile);
 
-	public String verifyEmailLoginOtp(String email, String otp);
-
-	public String signup(SignupRequest request, Role role);
+	void validateEmail(String email);
 }

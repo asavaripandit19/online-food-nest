@@ -10,11 +10,17 @@ import com.food.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>{
 	
+	boolean existsByUsername(String username);
+
+	boolean existsByMobile(String mobile);
+
+	boolean existsByEmail(String email);
+
+	Optional<User> findByUsername(String username);
+
 	Optional<User> findByMobile(String mobile);
+
 	Optional<User> findByEmail(String email);
-
-    boolean existsByMobile(String mobile);
-
-    boolean existsByEmail(String email);
+    
     
 }

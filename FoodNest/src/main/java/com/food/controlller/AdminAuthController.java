@@ -1,95 +1,138 @@
 package com.food.controlller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.food.dto.*;
+import com.food.dto.EmailOtpVerifyRequest;
+import com.food.dto.LoginRequest;
+import com.food.dto.MobileOtpVerifyRequest;
+import com.food.dto.SendEmailOtpRequest;
+import com.food.dto.SendMobileOtpRequest;
+import com.food.dto.UsernamePasswordRequest;
 import com.food.enums.OtpPurpose;
 import com.food.enums.Role;
 import com.food.service.AuthService;
 import com.food.service.OtpService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/auth/admin")
 public class AdminAuthController {
 
-    @Autowired
-    private AuthService authService;
+	@Autowired
+	private OtpService otpService;
 
-    @Autowired
-    private OtpService otpService;
+	@Autowired
+	private AuthService authService;
 
-    // ========================
-    // MOBILE SIGNUP OTP
-    // ========================
+	// =========================================================
+	// SIGNUP - MOBILE SEND OTP
+	// =========================================================
 
-    @PostMapping("/signup/mobile/send-otp")
-    public String sendMobileOtp(@RequestBody SendOtpRequest request) {
-        return otpService.generateAndSaveOtp(request.getMobile(), OtpPurpose.SIGNUP);
-    }
+	@PostMapping("/signup/mobile/send-otp")
+	public ResponseEntity<?> signupMobileSendOtp(@Valid @RequestBody SendMobileOtpRequest request) {
 
-    @PostMapping("/signup/mobile/verify-otp")
-    public String verifyMobileOtp(@RequestBody VerifyOtpRequest request) {
-        return authService.verifySignupOtp(request.getMobile(), request.getOtp());
-    }
+		return ResponseEntity.ok(
 
-    // =========================
-    // EMAIL SIGNUP OTP
-    // =========================
+				authService.signupMobileSendOtp(request.getMobile(), Role.ADMIN));
+	}
 
-    @PostMapping("/signup/email/send-otp")
-    public String sendEmailOtp(@RequestBody SendOtpRequest request) {
-        return otpService.sendEmailOtp(request.getEmail(), OtpPurpose.SIGNUP);
-    }
+	// =========================================================
+	// SIGNUP - MOBILE VERIFY OTP
+	// =========================================================
 
-    @PostMapping("/signup/email/verify-otp")
-    public String verifyEmailOtp(@RequestBody VerifyOtpRequest request) {
-        return authService.verifyEmailSignupOtp(request.getEmail(), request.getOtp());
-    }
+	@PostMapping("/signup/mobile/verify-otp")
+	public ResponseEntity<?> signupMobileVerifyOtp(@Valid @RequestBody MobileOtpVerifyRequest request) {
 
-    // =========================
-    // SIGNUP ADMIN ACCOUNT
-    // =========================
+		return ResponseEntity.ok(
 
-    @PostMapping("/signup")
-    public String signup(@RequestBody SignupRequest request) {
-        return authService.signup(request, Role.ADMIN);
-    }
+				otpService.verifyOtp(request.getMobile(), request.getOtp(), OtpPurpose.SIGNUP, Role.ADMIN));
+	}
 
-    // =========================
-    // LOGIN (EMAIL PASSWORD)
-    // =========================
+	// =========================================================
+	// SIGNUP - EMAIL SEND OTP
+	// =========================================================
+	@PostMapping("/signup/email/send-otp")
+	public ResponseEntity<?> signupEmailSendOtp(@Valid @RequestBody SendEmailOtpRequest request) {
 
-    @PostMapping("/login/email/password")
-    public String login(@RequestBody LoginRequest request) {
-        return authService.login(request);
-    }
+		return ResponseEntity.ok(
 
-    // =========================
-    // LOGIN MOBILE OTP
-    // =========================
+				authService.signupEmailSendOtp(request.getEmail(), Role.ADMIN));
+	}
+	// =========================================================
+	// SIGNUP - EMAIL VERIFY OTP
+	// =========================================================
 
-    @PostMapping("/login/mobile/send-otp")
-    public String sendLoginOtp(@RequestBody SendOtpRequest request) {
-        return otpService.generateAndSaveOtp(request.getMobile(), OtpPurpose.LOGIN);
-    }
+	@PostMapping("/signup/email/verify-otp")
+	public ResponseEntity<?> signupEmailVerifyOtp(@Valid @RequestBody EmailOtpVerifyRequest request) {
 
-    @PostMapping("/login/mobile/verify-otp")
-    public String verifyLoginOtp(@RequestBody VerifyOtpRequest request) {
-        return authService.loginVerifyOtp(request.getMobile(), request.getOtp());
-    }
+		return ResponseEntity.ok(
 
-    // =========================
-    // LOGIN EMAIL OTP
-    // =========================
+				otpService.verifyEmailOtp(request.getEmail(), request.getOtp(), OtpPurpose.SIGNUP, Role.ADMIN));
+	}
 
-    @PostMapping("/login/email/send-otp")
-    public String sendEmailLoginOtp(@RequestBody SendOtpRequest request) {
-        return otpService.sendEmailOtp(request.getEmail(), OtpPurpose.LOGIN);
-    }
+	@PostMapping("/signup/username/password")
+	public ResponseEntity<?> signupWithUsernamePassword(@Valid @RequestBody UsernamePasswordRequest request) {
 
-    @PostMapping("/login/email/verify-otp")
-    public String verifyEmailLoginOtp(@RequestBody VerifyOtpRequest request) {
-        return authService.verifyEmailLoginOtp(request.getEmail(), request.getOtp());
-    }
+		return ResponseEntity.ok(
+
+				authService.signupWithUsernamePassword(request, Role.ADMIN));
+	}
+
+	// =========================================================
+	// LOGIN - MOBILE SEND OTP
+	// =========================================================
+
+	@PostMapping("/login/mobile/send-otp")
+	public ResponseEntity<?> loginMobileSendOtp(@Valid @RequestBody SendMobileOtpRequest request) {
+
+		return ResponseEntity.ok(
+
+				authService.sendLoginMobileOtp(request.getMobile(), Role.ADMIN));
+	}
+	// =========================================================
+	// LOGIN - MOBILE VERIFY OTP
+	// =========================================================
+
+	@PostMapping("/login/mobile/verify-otp")
+	public ResponseEntity<?> loginMobileVerifyOtp(@Valid @RequestBody MobileOtpVerifyRequest request) {
+
+		return ResponseEntity.ok(
+
+				authService.loginVerifyMobileOtp(request.getMobile(), request.getOtp()));
+	}
+
+	@PostMapping("/login/email/send-otp")
+	public ResponseEntity<?> loginEmailSendOtp(@Valid @RequestBody SendEmailOtpRequest request) {
+
+		return ResponseEntity.ok(
+
+				authService.sendLoginEmailOtp(request.getEmail(), Role.ADMIN));
+	}
+
+	// =========================================================
+	// LOGIN - EMAIL VERIFY OTP
+	// =========================================================
+
+	@PostMapping("/login/email/verify-otp")
+	public ResponseEntity<?> loginEmailVerifyOtp(@Valid @RequestBody EmailOtpVerifyRequest request) {
+
+		return ResponseEntity.ok(
+
+				authService.verifyEmailLoginOtp(request.getEmail(), request.getOtp()));
+	}
+
+	// =========================================================
+	// LOGIN - USERNAME PASSWORD
+	// =========================================================
+
+	@PostMapping("/login/username/password")
+	public ResponseEntity<?> loginWithUsernamePassword(@Valid @RequestBody LoginRequest request) {
+
+		return ResponseEntity.ok(
+
+				authService.login(request));
+	}
 }
