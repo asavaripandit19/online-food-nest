@@ -1,94 +1,115 @@
 package com.food.filter;
 
-import com.food.config.BucketConfig;
+import java.io.IOException;
 
-import io.github.bucket4j.Bucket;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+import com.food.dto.RateLimitRule;
+import com.food.security.CustomUserPrincipal;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class RateLimitFilter implements Filter {
 
-    private final ConcurrentHashMap<String, Bucket> cache =
-            new ConcurrentHashMap<>();
+    private final RateLimiterService rateLimiterService;
 
     @Override
-    public void doFilter(
-            ServletRequest request,
-            ServletResponse response,
-            FilterChain chain
-    ) throws IOException, ServletException {
+    public void doFilter(ServletRequest request,
+                         ServletResponse response,
+                         FilterChain chain)
+            throws IOException, ServletException {
 
-        HttpServletRequest req =
-                (HttpServletRequest) request;
-
-        HttpServletResponse res =
-                (HttpServletResponse) response;
+        HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletResponse res = (HttpServletResponse) response;
 
         String path = req.getRequestURI();
 
-        String key =
-                req.getRemoteAddr() + path;
-
-        Bucket bucket = null;
-
-        // Signup OTP
-        if (path.contains("/signup/mobile/send-otp")) {
-
-            bucket = cache.computeIfAbsent(
-                    key,
-                    k -> BucketConfig.signupOtpBucket()
-            );
+        // Skip static / health
+        if (path.startsWith("/actuator") || path.contains("/public")) {
+            chain.doFilter(request, response);
+            return;
         }
 
-        // Login OTP
-        else if (path.contains("/login/send-otp")) {
+        String userKey = getUserKey();
+        if (userKey == null) {
+            userKey = req.getRemoteAddr();
+        }
 
-            bucket = cache.computeIfAbsent(
-                    key,
-                    k -> BucketConfig.loginOtpBucket()
-            );
+        String key = userKey + ":" + normalize(path);
+
+        RateLimitRule rule = getRule(path);
+
+        if (!rateLimiterService.isAllowed(key, rule.limit(), rule.windowSeconds())) {
+
+            res.setStatus(429);
+            res.getWriter().write("Too many requests. Please try again later.");
+            return;
+        }
+
+        chain.doFilter(request, response);
+    }
+
+    // ================= RULES =================
+    private RateLimitRule getRule(String path) {
+
+        // OTP Signup
+        if (path.contains("/signup/otp")) {
+            return new RateLimitRule(5, 600); // 10 min
+        }
+
+        // OTP Login
+        if (path.contains("/login/otp")) {
+            return new RateLimitRule(5, 600); // 10 min
         }
 
         // Login API
-        else if (path.equals("/api/auth/login")) {
-
-            bucket = cache.computeIfAbsent(
-                    key,
-                    k -> BucketConfig.loginBucket()
-            );
+        if (path.contains("/login")) {
+            return new RateLimitRule(10, 600); // 10 min
         }
 
-        if (bucket != null) {
+        // Dashboard
+        if (path.contains("/dashboard")) {
+            return new RateLimitRule(60, 60); // 1 min
+        }
 
-            if (bucket.tryConsume(1)) {
+        // Toggle status
+        if (path.contains("/toggle-status")) {
+            return new RateLimitRule(20, 60); // 1 min
+        }
 
-                chain.doFilter(request, response);
+        return new RateLimitRule(100, 60);
+    }
 
-            } else {
+    // ================= USER KEY =================
+    private String getUserKey() {
 
-                res.setStatus(429);
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-                res.getWriter().write(
-                        "Too many requests. Try again later."
-                );
+            if (auth != null && auth.getPrincipal() instanceof CustomUserPrincipal user) {
+                return user.getUserId().toString();
             }
 
-        } else {
-
-            chain.doFilter(request, response);
+        } catch (Exception e) {
+            return null;
         }
+
+        return null;
+    }
+
+    // ================= PATH NORMALIZER =================
+    private String normalize(String path) {
+        return path.replaceAll("[0-9]+", "{id}");
     }
 }

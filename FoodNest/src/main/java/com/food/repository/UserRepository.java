@@ -1,6 +1,7 @@
 package com.food.repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.food.model.User;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long>{
+public interface UserRepository extends JpaRepository<User, UUID>{
 	
 	boolean existsByUsername(String username);
 
@@ -21,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	Optional<User> findByMobile(String mobile);
 
 	Optional<User> findByEmail(String email);
+
+	Object findByEmailOrUsernameOrMobile(String identifier, String identifier2, String identifier3);
     
     
 }

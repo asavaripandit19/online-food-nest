@@ -278,7 +278,11 @@ public class AuthServiceImpl implements AuthService {
 			return "Invalid username or password";
 		}
 
-		return jwtService.generateToken(user.getId(), user.getRole().name());
+		return jwtService.generateToken(
+		        user.getId(),
+		        user.getEmail(),
+		        user.getRole().name()
+		);
 	}
 
 	// =====================================================
@@ -315,7 +319,11 @@ public class AuthServiceImpl implements AuthService {
 		verification.setVerified(true);
 		otpRepository.save(verification);
 
-		return jwtService.generateToken(user.getId(), user.getRole().name());
+		return jwtService.generateToken(
+		        user.getId(),
+		        user.getEmail(),
+		        user.getRole().name()
+		);
 	}
 
 	// =====================================================
@@ -351,6 +359,10 @@ public class AuthServiceImpl implements AuthService {
 		verification.setVerified(true);
 		otpRepository.save(verification);
 
-		return jwtService.generateToken(user.getId(), user.getRole().name());
+		   return jwtService.generateToken(
+		            user.getId(),     // UUID now
+		            user.getEmail(),
+		            user.getRole().name()
+		    );
 	}
 }

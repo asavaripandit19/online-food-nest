@@ -1,8 +1,7 @@
 package com.food.ServiceImpl;
 
-
-
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,17 +15,21 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class JwtTokenServiceImpl implements JwtTokenService {
 
-	@Value("${jwt.secret}")
+    @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration}")
     private long expiration;
-    
-    
-	@Override
-	public String generateToken(Long userId, String role) {
-		return Jwts.builder()
-                .claim("userId", userId) 
+
+    // =========================
+    // GENERATE TOKEN
+    // =========================
+    @Override
+    public String generateToken(UUID userId, String email, String role) {
+
+        return Jwts.builder()
+                .setSubject(userId.toString())   // ✅ BEST PLACE for userId
+                .claim("email", email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
@@ -34,48 +37,51 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                 .compact();
     }
 
+    // =========================
+    // CLAIMS
+    // =========================
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody();
+    }
 
-	 // =========================
+    // =========================
     // VALIDATE TOKEN
     // =========================
-
     @Override
     public boolean validateToken(String token) {
-
         try {
-
-            Jwts.parser()
-
-                    .setSigningKey(secret)
-
-                    .parseClaimsJws(token);
-
+            getClaims(token);
             return true;
-
         } catch (Exception e) {
-
             return false;
         }
     }
 
     // =========================
+    // EXTRACT USER ID (UUID)
+    // =========================
+    @Override
+    public UUID extractUserId(String token) {
+        String userId = getClaims(token).getSubject();
+        return UUID.fromString(userId);
+    }
+
+    // =========================
+    // EXTRACT EMAIL
+    // =========================
+    @Override
+    public String extractEmail(String token) {
+        return getClaims(token).get("email", String.class);
+    }
+
+    // =========================
     // EXTRACT ROLE
     // =========================
-
     @Override
     public String extractRole(String token) {
-
-        Claims claims = Jwts.parser()
-
-                .setSigningKey(secret)
-
-                .parseClaimsJws(token)
-
-                .getBody();
-
-        return claims.get("role", String.class);
+        return getClaims(token).get("role", String.class);
     }
-		
-	
-
 }

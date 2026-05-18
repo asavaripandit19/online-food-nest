@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/restaurant/create").hasRole("VENDOR")
                 .requestMatchers("/restaurant/logo/**").hasRole("VENDOR")
                 .requestMatchers("/restaurant/cover/**").hasRole("VENDOR")
-
+                .requestMatchers("/vendor/**").hasRole("VENDOR")
                 // ROLE BASED ACCESS
                 .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/vendor/**").hasRole("VENDOR")

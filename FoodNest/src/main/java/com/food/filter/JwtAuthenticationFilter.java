@@ -1,21 +1,18 @@
 package com.food.filter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-
 import org.springframework.stereotype.Component;
-
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.food.security.CustomUserPrincipal;
 import com.food.service.JwtTokenService;
 
 import jakarta.servlet.FilterChain;
@@ -23,50 +20,59 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.List;
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-	@Autowired
-	private JwtTokenService jwtService;
+    @Autowired
+    private JwtTokenService jwtService;
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
-		// Authorization header
-		String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-		// No token
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-			filterChain.doFilter(request, response);
+        String token = authHeader.substring(7);
 
-			return;
-		}
+        if (jwtService.validateToken(token)) {
 
-		// Extract token
-		String token = authHeader.substring(7);
+            // =========================
+            // FIX: UUID instead of Long
+            // =========================
+            UUID userId = jwtService.extractUserId(token);
 
-		// Validate token
-		boolean valid = jwtService.validateToken(token);
+            String email = jwtService.extractEmail(token);
+            String role = jwtService.extractRole(token);
 
-		if (valid) {
+            CustomUserPrincipal principal =
+                    new CustomUserPrincipal(
+                            userId,
+                            email,
+                            role,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                    );
 
-			// Extract role
-			String role = jwtService.extractRole(token);
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            principal.getAuthorities()
+                    );
 
-			// Create authentication object
-			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(null, null,
-					List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+            auth.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
 
-			authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
 
-			// Set authentication
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-		}
-
-		filterChain.doFilter(request, response);
-	}
+        filterChain.doFilter(request, response);
+    }
 }

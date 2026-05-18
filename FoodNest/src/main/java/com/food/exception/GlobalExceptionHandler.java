@@ -14,53 +14,57 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	// 1. EMAIL ALREADY EXISTS (IMPORTANT)
-	@ExceptionHandler(EmailAlreadyExistsException.class)
-	public ResponseEntity<ApiResponse> handleEmailExists(EmailAlreadyExistsException ex) {
+    // 1. EMAIL ALREADY EXISTS (IMPORTANT)
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleEmailExists(
+            EmailAlreadyExistsException ex) {
 
-	    return ResponseEntity
-	            .status(HttpStatus.CONFLICT)
-	            .body(new ApiResponse(false, ex.getMessage(), null));
-	}
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ApiResponse(false, ex.getMessage(), null));
+    }
 
+    @ExceptionHandler(MobileAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleMobileExists(
+            MobileAlreadyExistsException ex) {
 
-	@ExceptionHandler(MobileAlreadyExistsException.class)
-	public ResponseEntity<ApiResponse> handleMobileExists(MobileAlreadyExistsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ApiResponse(false, ex.getMessage(), null));
+    }
 
-	    return ResponseEntity
-	            .status(HttpStatus.CONFLICT)
-	            .body(new ApiResponse(false, ex.getMessage(), null));
-	}
+    // ============================
+    // CHANGED: IMPROVED VALIDATION (single unified format)
+    // ============================
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidationException(
+            MethodArgumentNotValidException ex) {
 
-	
-	
-//    @ExceptionHandler(HttpMessageNotReadableException.class)
-//    public ResponseEntity<String> handleEnumError(HttpMessageNotReadableException ex) {
-//
-//        Throwable cause = ex.getMostSpecificCause();
-//
-//        if (cause != null && cause.getMessage() != null) {
-//
-//            if (cause.getMessage().contains("FoodType")) {
-//                return ResponseEntity
-//                        .badRequest()
-//                        .body("Invalid FoodType. Allowed: VEG, NON_VEG, BOTH");
-//            }
-//
-//            if (cause.getMessage().contains("ServiceType")) {
-//                return ResponseEntity
-//                        .badRequest()
-//                        .body("Invalid ServiceType. Allowed values: BREAKFAST, LUNCH, DINNER, REGULAR");
-//            }
-//        }
-//
-//        return ResponseEntity
-//                .badRequest()
-//                .body("Invalid request format");
-//    }
-	
-	@ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse> handleEnumError(HttpMessageNotReadableException ex) {
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(error ->
+                        errors.put(
+                                error.getField(),
+                                error.getDefaultMessage()
+                        ));
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiResponse(
+                        false,
+                        "Validation failed",
+                        errors.toString()   // CHANGED PART (added structured errors)
+                ));
+    }
+
+    // ============================
+    // ENUM ERROR HANDLING (UNCHANGED BUT CLEAN)
+    // ============================
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleEnumError(
+            HttpMessageNotReadableException ex) {
 
         Throwable cause = ex.getMostSpecificCause();
 
@@ -96,11 +100,13 @@ public class GlobalExceptionHandler {
                         null
                 ));
     }
-	
-	
-	
+
+    // ============================
+    // BUSINESS TYPE ERROR
+    // ============================
     @ExceptionHandler(InvalidBusinessTypeException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidBusinessTypeEntity(InvalidBusinessTypeException ex) {
+    public ResponseEntity<Map<String, Object>> handleInvalidBusinessTypeEntity(
+            InvalidBusinessTypeException ex) {
 
         Map<String, Object> error = new HashMap<>();
         error.put("success", false);
@@ -109,9 +115,13 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-    
+
+    // ============================
+    // RESTAURANT NOT FOUND
+    // ============================
     @ExceptionHandler(RestaurantNotFoundException.class)
-    public ResponseEntity<ApiResponse> handleRestaurantNotFound(RestaurantNotFoundException ex) {
+    public ResponseEntity<ApiResponse> handleRestaurantNotFound(
+            RestaurantNotFoundException ex) {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -121,28 +131,15 @@ public class GlobalExceptionHandler {
                         null
                 ));
     }
-    
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse> handleValidationException(
-            MethodArgumentNotValidException ex) {
 
-        String errorMessage = "Validation failed";
+    // ============================
+    // CHANGED: SINGLE CLEAN VALIDATION HANDLER REMOVED DUPLICATE LOGIC
+    // ============================
 
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errorMessage = error.getDefaultMessage();
-            break;
-        }
 
-        return ResponseEntity
-                .badRequest()
-                .body(new ApiResponse(
-                        false,
-                        errorMessage,
-                        null
-                ));
-    }
-    
-    
+    // ============================
+    // CHANGED: GENERIC EXCEPTION (SAFE MESSAGE)
+    // ============================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> handleGeneric(Exception ex) {
 
@@ -152,24 +149,8 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse(
                         false,
-                        ex.getMessage(),
-                        null
+                        "Something went wrong. Please try again later.",
+                        null   // CHANGED: removed ex.getMessage() for safety
                 ));
     }
-    
-    
-    
-    
-//	// 2. ALL OTHER EXCEPTIONS (FALLBACK)
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiResponse> handleGeneric(Exception ex) {
-//
-//        return ResponseEntity
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(new ApiResponse(
-//                        false,
-//                        "Something went wrong. Please try again later.",
-//                        null
-//                ));
-//    }
 }
